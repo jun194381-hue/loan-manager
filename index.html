@@ -5,405 +5,277 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>借還款管理</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0d1117; color: #e6edf3;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
-    min-height: 100vh;
-  }
-  .app { max-width: 700px; margin: 0 auto; padding: 16px; }
-
-  /* Header */
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .header h1 { font-size: 1.2rem; background: linear-gradient(135deg, #d29922, #ffa657); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-
-  /* Summary cards */
-  .summary { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-  .person {
-    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
-    padding: 14px; display: flex; justify-content: space-between; align-items: center;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .person:hover { border-color: #58a6ff; }
-  .person .info { display: flex; flex-direction: column; gap: 2px; }
-  .person .name { font-weight: 700; font-size: 0.95rem; }
-  .person .detail { font-size: 0.72rem; color: #8b949e; }
-  .person .amt { font-size: 1.1rem; font-weight: 700; }
-  .person .amt.pos { color: #f85149; }
-  .person .amt.zero { color: #3fb950; }
-
-  /* Input form */
-  .form {
-    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
-    padding: 16px; margin-bottom: 16px;
-  }
-  .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  .form-row:last-child { margin-bottom: 0; }
-  .form input, .form select {
-    background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
-    color: #e6edf3; padding: 10px 12px; font-size: 0.85rem; flex: 1; min-width: 100px;
-  }
-  .form input:focus, .form select:focus { outline: none; border-color: #58a6ff; }
-  .form select { cursor: pointer; }
-  .form .btn-group { display: flex; gap: 8px; flex: 0 0 auto; }
-  .btn {
-    background: #21262d; border: 1px solid #30363d; color: #e6edf3;
-    padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
-    transition: all 0.15s; white-space: nowrap;
-  }
-  .btn:hover { background: #30363d; }
-  .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
-  .btn-primary:hover { background: #2ea043; }
-  .btn-danger { background: #da3633; border-color: #da3633; color: #fff; }
-  .btn-danger:hover { background: #f85149; }
-  .btn-sm { padding: 6px 12px; font-size: 0.75rem; }
-
-  /* History */
-  .history {
-    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
-    padding: 16px;
-  }
-  .history-title { font-size: 0.72rem; color: #8b949e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
-  .tx {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 0; border-bottom: 1px solid #21262d; gap: 8px;
-  }
-  .tx:last-child { border-bottom: none; }
-  .tx-left { display: flex; flex-direction: column; gap: 1px; flex: 1; }
-  .tx-person { font-weight: 600; font-size: 0.82rem; }
-  .tx-date { font-size: 0.65rem; color: #8b949e; }
-  .tx-type {
-    font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;
-    display: inline-block;
-  }
-  .tx-type.loan { background: rgba(88,166,255,0.15); color: #58a6ff; }
-  .tx-type.interest { background: rgba(210,153,34,0.15); color: #d29922; }
-  .tx-type.principal { background: rgba(63,185,80,0.15); color: #3fb950; }
-  .tx-amt { font-weight: 700; font-size: 0.9rem; text-align: right; white-space: nowrap; }
-  .tx-amt.income { color: #3fb950; }
-  .tx-amt.outcome { color: #f85149; }
-  .tx-del { background: none; border: none; color: #30363d; cursor: pointer; font-size: 1rem; padding: 0 4px; }
-  .tx-del:hover { color: #f85149; }
-  .empty { text-align: center; padding: 24px; color: #8b949e; font-size: 0.82rem; }
-
-  /* Modal */
-  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; }
-  .modal-overlay.show { display: flex; }
-  .modal {
-    background: #161b22; border: 1px solid #30363d; border-radius: 12px;
-    padding: 24px; width: 90%; max-width: 400px;
-  }
-  .modal h2 { font-size: 1rem; margin-bottom: 8px; }
-  .modal p { font-size: 0.82rem; color: #8b949e; margin-bottom: 16px; }
-  .modal .info-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; border-bottom: 1px solid #21262d; }
-  .modal .total-amt { font-size: 1.3rem; font-weight: 700; color: #d29922; text-align: center; padding: 12px 0; }
-
-  @media (max-width: 480px) {
-    .app { padding: 12px; }
-    .form-row { flex-direction: column; }
-    .form input, .form select { min-width: 0; }
-    .btn-group { flex-direction: row; }
-    .btn-group .btn { flex: 1; }
-  }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;min-height:100vh}
+.app{max-width:700px;margin:0 auto;padding:16px}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.hdr h1{font-size:1.2rem;background:linear-gradient(135deg,#d29922,#ffa657);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px;margin-bottom:12px}
+.card+.card{margin-top:0}
+.person{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;transition:.15s;border-bottom:1px solid #21262d}
+.person:last-child{border-bottom:none}
+.person:hover{background:#1c2128;border-radius:6px}
+.p-info{display:flex;flex-direction:column;gap:2px}
+.p-name{font-weight:700;font-size:.95rem}
+.p-sub{font-size:.72rem;color:#8b949e}
+.p-amt{font-size:1.1rem;font-weight:700}
+.p-amt.neg{color:#f85149}
+.p-amt.ok{color:#3fb950}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.row:last-child{margin-bottom:0}
+.inp{background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:10px 12px;font-size:.85rem;flex:1;min-width:80px}
+.inp:focus{outline:none;border-color:#58a6ff}
+.sel{background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:10px 12px;font-size:.85rem;min-width:90px;cursor:pointer}
+.btn{background:#21262d;border:1px solid #30363d;color:#e6edf3;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:.85rem;transition:.15s;white-space:nowrap}
+.btn:hover{background:#30363d}
+.btn-p{background:#238636;border-color:#238636;color:#fff;font-weight:600}
+.btn-p:hover{background:#2ea043}
+.btn-sm{background:transparent;border:1px solid #30363d;color:#8b949e;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.72rem}
+.btn-sm:hover{color:#e6edf3;border-color:#8b949e}
+.section-title{font-size:.72rem;color:#8b949e;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.tx{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #21262d;gap:8px}
+.tx:last-child{border-bottom:none}
+.tx-l{display:flex;flex-direction:column;gap:1px;flex:1}
+.tx-n{font-weight:600;font-size:.82rem}
+.tx-d{font-size:.65rem;color:#8b949e}
+.tx-t{font-size:.6rem;padding:2px 8px;border-radius:4px;font-weight:600;display:inline-block}
+.tx-t.l{background:rgba(88,166,255,.15);color:#58a6ff}
+.tx-t.i{background:rgba(210,153,34,.15);color:#d29922}
+.tx-t.p{background:rgba(63,185,80,.15);color:#3fb950}
+.tx-a{font-weight:700;font-size:.9rem;text-align:right;white-space:nowrap}
+.tx-a.g{color:#3fb950}
+.tx-a.r{color:#f85149}
+.tx-x{background:none;border:none;color:#30363d;cursor:pointer;font-size:.9rem;padding:0 4px}
+.tx-x:hover{color:#f85149}
+.empty{text-align:center;padding:24px;color:#8b949e;font-size:.82rem}
+.tot{text-align:right;font-size:.75rem;color:#8b949e;padding-top:8px}
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:100;justify-content:center;align-items:center}
+.overlay.s{display:flex}
+.modal{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;width:90%;max-width:400px}
+.modal h2{font-size:1rem;margin-bottom:4px}
+.modal .hint{font-size:.82rem;color:#8b949e;margin-bottom:16px}
+.modal .ir{display:flex;justify-content:space-between;padding:6px 0;font-size:.85rem;border-bottom:1px solid #21262d}
+.modal .big{font-size:1.3rem;font-weight:700;color:#d29922;text-align:center;padding:12px 0}
+@media(max-width:480px){.app{padding:12px}.row{flex-direction:column}.inp{min-width:0}}
 </style>
 </head>
 <body>
 <div class="app" id="app">
-  <div class="header">
-    <h1>💰 借還款管理</h1>
+  <div class="hdr">
+    <h1>借還款管理</h1>
     <div style="display:flex;gap:6px">
-      <button class="btn btn-sm" onclick="exportData()">📥 備份</button>
-      <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">📤 還原</button>
-      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn-sm" onclick="backup()">備份</button>
+      <input type="file" id="fi" accept=".json" style="display:none" onchange="restore(event)">
+      <button class="btn-sm" onclick="document.getElementById('fi').click()">還原</button>
     </div>
   </div>
 
-  <!-- Summary -->
-  <div class="summary" id="summary"></div>
+  <div id="summary" class="card" style="padding:0"></div>
 
-  <!-- Add Transaction -->
-  <div class="form">
-    <div class="form-row">
-      <input type="date" id="txDate">
-      <input type="text" id="txName" placeholder="借款人姓名" list="nameList" autocomplete="off">
-      <datalist id="nameList"></datalist>
-      <select id="txType">
+  <div class="card">
+    <div class="row">
+      <input class="inp" type="date" id="d">
+      <input class="inp" type="text" id="n" placeholder="借款人" list="nl">
+      <datalist id="nl"></datalist>
+      <select class="sel" id="t">
         <option value="loan">借款</option>
-        <option value="interest">還利息</option>
-        <option value="principal">還本金</option>
+        <option value="int">還利息</option>
+        <option value="prin">還本金</option>
       </select>
-      <input type="number" id="txAmount" placeholder="金額" min="0" step="1000">
+      <input class="inp" type="number" id="a" placeholder="金額" min="0">
     </div>
-    <div class="form-row">
-      <div style="display:flex;gap:8px;align-items:center;flex:1">
-        <input type="number" id="rateInput" placeholder="年利率 % (預設12%)" step="0.5" min="0" max="100" style="max-width:180px">
-        <span style="font-size:0.72rem;color:#8b949e" id="totalHint"></span>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-primary" onclick="addTx()">＋ 新增</button>
-      </div>
+    <div class="row">
+      <input class="inp" type="number" id="r" placeholder="年利率 %" step="0.5" style="max-width:160px">
+      <span style="font-size:.72rem;color:#8b949e;line-height:36px" id="hint"></span>
+      <button class="btn btn-p" onclick="add()">新增</button>
     </div>
   </div>
 
-  <!-- History -->
-  <div class="history">
-    <div class="history-title">📋 交易紀錄</div>
-    <div id="txList"></div>
+  <div class="card">
+    <div class="section-title">交易紀錄</div>
+    <div id="list"></div>
   </div>
 </div>
 
-<!-- Detail Modal -->
-<div class="modal-overlay" id="detailModal">
+<div class="overlay" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h2 id="modalName">—</h2>
-      <button class="btn btn-sm" onclick="closeModal()">✕</button>
+      <h2 id="mn">-</h2>
+      <button class="btn-sm" onclick="closeModal()">X</button>
     </div>
-    <div id="modalContent"></div>
+    <div id="mc"></div>
     <div style="margin-top:16px;display:flex;gap:8px">
-      <input type="number" id="modalRate" placeholder="年利率 %" step="0.5" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:8px 12px;font-size:0.85rem;flex:1">
-      <button class="btn btn-sm btn-primary" onclick="updateRate()">設定利率</button>
+      <input class="inp" type="number" id="mr" placeholder="年利率 %" step="0.5" style="flex:1">
+      <button class="btn btn-p" onclick="setRate()">設定</button>
     </div>
   </div>
 </div>
 
 <script>
-let data = { txs: [], rates: {} };
+var D={txs:[],rates:{}};
 
-// Load
-function load() {
-  const saved = localStorage.getItem('loanTracker');
-  if (saved) {
-    try { data = JSON.parse(saved); } catch(e) {}
+function load(){
+  var s=localStorage.getItem('ld');
+  if(s){try{D=JSON.parse(s)}catch(e){}}
+}
+function save(){localStorage.setItem('ld',JSON.stringify(D))}
+
+document.getElementById('d').value=new Date().toISOString().slice(0,10);
+
+function names(){
+  var s=new Set();
+  D.txs.forEach(function(t){s.add(t.n)});
+  return Array.from(s).sort();
+}
+
+function upNames(){
+  var dl=document.getElementById('nl');
+  dl.innerHTML=names().map(function(n){return '<option value="'+n+'">'}).join('');
+}
+
+function calc(nm){
+  var tx=D.txs.filter(function(t){return t.n===nm});
+  var tl=tx.filter(function(t){return t.t==='loan'}).reduce(function(s,t){return s+t.a},0);
+  var rp=tx.filter(function(t){return t.t==='prin'}).reduce(function(s,t){return s+t.a},0);
+  var ri=tx.filter(function(t){return t.t==='int'}).reduce(function(s,t){return s+t.a},0);
+  var rem=Math.max(0,tl-rp);
+  
+  var ids=tx.filter(function(t){return t.t==='int'}).sort(function(a,b){return b.d.localeCompare(a.d)});
+  var lds=tx.filter(function(t){return t.t==='loan'}).sort(function(a,b){return a.d.localeCompare(b.d)});
+  var lid=ids.length>0?ids[0].d:(lds.length>0?lds[0].d:null);
+  
+  var rt=D.rates[nm]||12;
+  var intO=0;
+  if(lid&&rem>0){
+    var last=new Date(lid);
+    var now=new Date();
+    var days=Math.floor((now-last)/(1000*60*60*24));
+    intO=rem*(rt/100)*days/365;
   }
+  var uib=Math.max(0,Math.round(intO-ri));
+  
+  return {tl:tl,rp:rp,rem:rem,ri:ri,uib:uib,tot:rem+uib,rt:rt,lid:lid,cn:tx.length};
 }
 
-function save() {
-  localStorage.setItem('loanTracker', JSON.stringify(data));
-}
-
-// Today
-document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
-
-// Borrower names from data
-function getNameList() {
-  const names = new Set();
-  data.txs.forEach(t => names.add(t.n));
-  return [...names].sort();
-}
-
-function updateNameList() {
-  const dl = document.getElementById('nameList');
-  dl.innerHTML = getNameList().map(n => '<option value="'+n+'">').join('');
-}
-
-// Summary
-function calcPerson(name) {
-  const txs = data.txs.filter(t => t.n === name);
-  const totalLoan = txs.filter(t => t.t === 'loan').reduce((s, t) => s + t.a, 0);
-  const repaidP = txs.filter(t => t.t === 'principal').reduce((s, t) => s + t.a, 0);
-  const repaidI = txs.filter(t => t.t === 'interest').reduce((s, t) => s + t.a, 0);
+function render(){
+  var ns=names();
+  var sum=document.getElementById('summary');
+  var hint=document.getElementById('hint');
   
-  // Get last interest payment date for interest calculation
-  const interestTxs = txs.filter(t => t.t === 'interest').sort((a,b) => b.d.localeCompare(a.d));
-  const loanTxs = txs.filter(t => t.t === 'loan').sort((a,b) => a.d.localeCompare(b.d));
-  const lastInterestDate = interestTxs.length > 0 ? interestTxs[0].d : (loanTxs.length > 0 ? loanTxs[0].d : null);
-  
-  // Calculate interest from last interest date to today
-  const rate = data.rates[name] || 12; // percentage
-  const remainingPrincipal = Math.max(0, totalLoan - repaidP);
-  let unpaidInterest = repaidI; // This is the paid interest (confusing naming - sorry)
-  // Actually, let me re-think: 
-  // 還利息 = amount paid toward interest
-  // The total interest owed depends on how long since last payment...
-  // For simplicity: show the current balance clearly
-  
-  // Simple interest calculation
-  let interestOwed = 0;
-  if (lastInterestDate && remainingPrincipal > 0) {
-    const last = new Date(lastInterestDate);
-    const today = new Date();
-    const days = Math.floor((today - last) / (1000*60*60*24));
-    interestOwed = remainingPrincipal * (rate/100) * days / 365;
-  }
-
-  const totalPaidInterest = txs.filter(t => t.t === 'interest').reduce((s, t) => s + t.a, 0);
-  const unpaidInterestBalance = Math.max(0, Math.round(interestOwed - totalPaidInterest));
-  
-  return {
-    totalLoan, repaidP, remainingPrincipal,
-    totalPaidInterest, unpaidInterestBalance,
-    totalOwed: remainingPrincipal + Math.max(0, unpaidInterestBalance),
-    rate, lastInterestDate,
-    txCount: txs.length
-  };
-}
-
-function render() {
-  const names = getNameList();
-  const summary = document.getElementById('summary');
-  const totalHint = document.getElementById('totalHint');
-  
-  if (names.length === 0) {
-    summary.innerHTML = '<div class="empty">還沒有資料，從下面新增第一筆借款</div>';
-    totalHint.textContent = '';
-    document.getElementById('txList').innerHTML = '<div class="empty">還沒有交易紀錄</div>';
+  if(ns.length===0){
+    sum.innerHTML='<div class="empty" style="padding:24px">還沒有資料，新增第一筆借款</div>';
+    hint.textContent='';
+    document.getElementById('list').innerHTML='<div class="empty">還沒有交易紀錄</div>';
     return;
   }
-
-  // Summary cards
-  summary.innerHTML = names.map(name => {
-    const p = calcPerson(name);
-    const cls = p.totalOwed > 0 ? 'pos' : 'zero';
-    return '<div class="person" onclick="showDetail(''+name+'')">' +
-      '<div class="info">' +
-        '<span class="name">'+name+'</span>' +
-        '<span class="detail">本金 '+p.totalLoan.toLocaleString()+' ｜ 已還 '+p.repaidP.toLocaleString()+'</span>' +
-      '</div>' +
-      '<div class="amt '+cls+'">'+p.totalOwed.toLocaleString()+' 元</div>' +
-    '</div>';
+  
+  sum.innerHTML=ns.map(function(nm){
+    var p=calc(nm);
+    var cls=p.tot>0?'neg':'ok';
+    return '<div class="person" onclick="showDetail(\''+nm+'\')"><div class="p-info">'+
+      '<span class="p-name">'+nm+'</span>'+
+      '<span class="p-sub">本金 '+p.tl.toLocaleString()+' | 已還 '+p.rp.toLocaleString()+'</span></div>'+
+      '<div class="p-amt '+cls+'">$'+p.tot.toLocaleString()+'</div></div>';
   }).join('');
-
-  // Total hint
-  const totalAll = names.reduce((s, n) => s + calcPerson(n).totalOwed, 0);
-  totalHint.textContent = '總欠款 '+totalAll.toLocaleString()+' 元';
-
-  // History
-  const sorted = [...data.txs].sort((a,b) => b.d.localeCompare(a.d));
-  document.getElementById('txList').innerHTML = sorted.map((tx, i) => {
-    const typeLabel = {loan:'借款', interest:'還利息', principal:'還本金'}[tx.t];
-    const typeCls = {loan:'loan', interest:'interest', principal:'principal'}[tx.t];
-    const amtCls = tx.t === 'loan' ? 'outcome' : 'income';
-    const sign = tx.t === 'loan' ? '-' : '+';
-    return '<div class="tx" data-idx="'+i+'">' +
-      '<div class="tx-left">' +
-        '<span class="tx-person">'+tx.n+' <span class="tx-type '+typeCls+'">'+typeLabel+'</span></span>' +
-        '<span class="tx-date">'+tx.d+'</span>' +
-      '</div>' +
-      '<div class="tx-amt '+amtCls+'">'+sign+'$'+tx.a.toLocaleString()+'</div>' +
-      '<button class="tx-del" onclick="deleteTx('+i+')">×</button>' +
-    '</div>';
+  
+  var ta=ns.reduce(function(s,nm){return s+calc(nm).tot},0);
+  hint.textContent='總欠款 $'+ta.toLocaleString();
+  
+  var sx=Array.from(D.txs).sort(function(a,b){return b.d.localeCompare(a.d)});
+  var list=document.getElementById('list');
+  list.innerHTML=sx.map(function(tx,i){
+    var tl={loan:'借款',int:'還利息',prin:'還本金'}[tx.t];
+    var tc={loan:'l',int:'i',prin:'p'}[tx.t];
+    var ac=tx.t==='loan'?'r':'g';
+    var sg=tx.t==='loan'?'-':'+';
+    return '<div class="tx" data-i="'+i+'"><div class="tx-l">'+
+      '<span class="tx-n">'+tx.n+' <span class="tx-t '+tc+'">'+tl+'</span></span>'+
+      '<span class="tx-d">'+tx.d+'</span></div>'+
+      '<div class="tx-a '+ac+'">'+sg+'$'+tx.a.toLocaleString()+'</div>'+
+      '<button class="tx-x" onclick="del('+i+')">X</button></div>';
   }).join('');
 }
 
-// Add transaction
-function addTx() {
-  const date = document.getElementById('txDate').value;
-  const name = document.getElementById('txName').value.trim();
-  const type = document.getElementById('txType').value;
-  const amount = parseInt(document.getElementById('txAmount').value);
-  const rate = document.getElementById('rateInput').value;
-
-  if (!name) { alert('請輸入借款人姓名'); return; }
-  if (!amount || amount <= 0) { alert('請輸入有效金額'); return; }
-
-  data.txs.push({ d: date, n: name, t: type, a: amount });
+function add(){
+  var d=document.getElementById('d').value;
+  var n=document.getElementById('n').value.trim();
+  var t=document.getElementById('t').value;
+  var a=parseInt(document.getElementById('a').value);
+  var r=document.getElementById('r').value;
   
-  // Set rate if provided
-  if (rate && parseFloat(rate) > 0) {
-    data.rates[name] = parseFloat(rate);
-  }
+  if(!n){alert('請輸入借款人姓名');return}
+  if(!a||a<=0){alert('請輸入有效金額');return}
   
-  // Default rate for new borrower
-  if (!data.rates[name]) {
-    data.rates[name] = 12;
-  }
-
+  D.txs.push({d:d,n:n,t:t,a:a});
+  
+  if(r&&parseFloat(r)>0)D.rates[n]=parseFloat(r);
+  if(!D.rates[n])D.rates[n]=12;
+  
   save();
-  updateNameList();
+  upNames();
   render();
-
-  // Clear inputs
-  document.getElementById('txName').value = '';
-  document.getElementById('txAmount').value = '';
-  document.getElementById('rateInput').value = '';
-}
-
-// Delete transaction
-function deleteTx(idx) {
-  if (!confirm('刪除這筆紀錄？')) return;
-  const actualIdx = data.txs.sort((a,b) => b.d.localeCompare(a.d))[idx];
-  // Re-find by matching all fields (since sort changes order)
-  const sorted = [...data.txs].sort((a,b) => b.d.localeCompare(a.d));
-  const real = sorted[idx];
-  const realIdx = data.txs.findIndex(t => t.d === real.d && t.n === real.n && t.t === real.t && t.a === real.a);
-  if (realIdx !== -1) {
-    data.txs.splice(realIdx, 1);
-    save();
-    render();
-  }
-}
-
-// Detail modal
-function showDetail(name) {
-  const p = calcPerson(name);
-  document.getElementById('modalName').textContent = name;
-  document.getElementById('modalRate').value = data.rates[name] || 12;
   
-  document.getElementById('modalContent').innerHTML =
-    '<div class="total-amt">欠款總額 '+p.totalOwed.toLocaleString()+' 元</div>' +
-    '<div class="info-row"><span>原始本金</span><span style="color:#58a6ff">$'+p.totalLoan.toLocaleString()+'</span></div>' +
-    '<div class="info-row"><span>已還本金</span><span style="color:#3fb950">$'+p.repaidP.toLocaleString()+'</span></div>' +
-    '<div class="info-row"><span>剩餘本金</span><span style="color:#d29922">$'+p.remainingPrincipal.toLocaleString()+'</span></div>' +
-    '<div class="info-row"><span>已付利息</span><span style="color:#3fb950">$'+p.totalPaidInterest.toLocaleString()+'</span></div>' +
-    '<div class="info-row"><span>未付利息</span><span style="color:#f85149">$'+p.unpaidInterestBalance.toLocaleString()+'</span></div>' +
-    '<div class="info-row"><span>年利率</span><span>'+(data.rates[name]||12)+'%</span></div>' +
-    '<div class="info-row"><span>交易次數</span><span>'+p.txCount+' 筆</span></div>';
-  
-  document.getElementById('detailModal').classList.add('show');
+  document.getElementById('n').value='';
+  document.getElementById('a').value='';
+  document.getElementById('r').value='';
 }
 
-function closeModal() {
-  document.getElementById('detailModal').classList.remove('show');
+function del(idx){
+  if(!confirm('刪除這筆？'))return;
+  var sx=Array.from(D.txs).sort(function(a,b){return b.d.localeCompare(a.d)});
+  var t=sx[idx];
+  var ri=D.txs.findIndex(function(x){return x.d===t.d&&x.n===t.n&&x.t===t.t&&x.a===t.a});
+  if(ri!==-1){D.txs.splice(ri,1);save();render()}
 }
 
-function updateRate() {
-  const name = document.getElementById('modalName').textContent;
-  const rate = parseFloat(document.getElementById('modalRate').value);
-  if (rate > 0 && rate <= 100) {
-    data.rates[name] = rate;
-    save();
-    showDetail(name); // Refresh
-  }
+function showDetail(nm){
+  var p=calc(nm);
+  document.getElementById('mn').textContent=nm;
+  document.getElementById('mr').value=D.rates[nm]||12;
+  document.getElementById('mc').innerHTML=
+    '<div class="big">欠款 $'+p.tot.toLocaleString()+'</div>'+
+    '<div class="ir"><span>原始本金</span><span style="color:#58a6ff">$'+p.tl.toLocaleString()+'</span></div>'+
+    '<div class="ir"><span>已還本金</span><span style="color:#3fb950">$'+p.rp.toLocaleString()+'</span></div>'+
+    '<div class="ir"><span>剩餘本金</span><span style="color:#d29922">$'+p.rem.toLocaleString()+'</span></div>'+
+    '<div class="ir"><span>已付利息</span><span style="color:#3fb950">$'+p.ri.toLocaleString()+'</span></div>'+
+    '<div class="ir"><span>未付利息</span><span style="color:#f85149">$'+p.uib.toLocaleString()+'</span></div>'+
+    '<div class="ir"><span>年利率</span><span>'+(D.rates[nm]||12)+'%</span></div>'+
+    '<div class="ir"><span>交易次數</span><span>'+p.cn+' 筆</span></div>';
+  document.getElementById('modal').classList.add('s');
 }
 
-// Export/Import
-function exportData() {
-  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'loan_backup_'+new Date().toISOString().slice(0,10)+'.json';
+function closeModal(){document.getElementById('modal').classList.remove('s')}
+
+function setRate(){
+  var nm=document.getElementById('mn').textContent;
+  var r=parseFloat(document.getElementById('mr').value);
+  if(r>0&&r<=100){D.rates[nm]=r;save();showDetail(nm)}
+}
+
+function backup(){
+  var b=new Blob([JSON.stringify(D)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='loan_'+new Date().toISOString().slice(0,10)+'.json';
   a.click();
 }
 
-function importData(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    try {
-      const d = JSON.parse(ev.target.result);
-      if (d.txs && Array.isArray(d.txs)) {
-        data = d;
-        save();
-        updateNameList();
-        render();
-        alert('還原成功！');
-      }
-    } catch(e) { alert('檔案格式錯誤'); }
+function restore(e){
+  var f=e.target.files[0];
+  if(!f)return;
+  var r=new FileReader();
+  r.onload=function(ev){
+    try{
+      var d=JSON.parse(ev.target.result);
+      if(d.txs&&Array.isArray(d.txs)){D=d;save();upNames();render();alert('OK')}
+    }catch(e){alert('錯誤')}
   };
-  reader.readAsText(file);
-  e.target.value = '';
+  r.readAsText(f);
+  e.target.value='';
 }
 
-// Click outside modal to close
-document.getElementById('detailModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-// Init
 load();
-updateNameList();
+upNames();
 render();
 </script>
 </body>
